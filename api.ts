@@ -5,7 +5,7 @@ import { flows } from "./flows.ts";
 const app = new Hono();
 
 app.get("/", async (c) => {
-  return c.json({ message: "server is live" });
+  return c.json({ message: "Server is live" });
 });
 
 app.get("/api/flows", async (c) => {
