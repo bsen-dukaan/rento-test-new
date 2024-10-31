@@ -24,22 +24,19 @@ app.post("/api/flows", async (c) => {
     const body = await c.req.json();
     console.log("[API] Request body:", body);
 
-    // Handle both { slugs: ["kyc_flow"] } and ["kyc_flow"] formats
-    const slugs = body.slugs || body;
-
-    if (!Array.isArray(slugs)) {
+    if (!body.slugs || !Array.isArray(body.slugs)) {
       return c.json(
         {
           success: false,
           error: "Invalid request body",
-          details: "Request must include an array of flow slugs",
+          details: "Request must include 'slugs' array",
         },
         400
       );
     }
 
     try {
-      const validatedSlugs = validateFlowSlugs(slugs);
+      const validatedSlugs = validateFlowSlugs(body.slugs);
       const requestedFlows = validatedSlugs.reduce((acc, slug) => {
         acc[slug] = flows[slug];
         return acc;
