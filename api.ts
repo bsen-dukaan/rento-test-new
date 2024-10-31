@@ -14,6 +14,10 @@ function validateFlowSlugs(slugs: string[]): string[] {
   return slugs;
 }
 
+app.get("/", async (c) => {
+  return c.json({ message: "server is live" });
+});
+
 app.post("/api/flows", async (c) => {
   try {
     console.log("[API] Parsing request body");
