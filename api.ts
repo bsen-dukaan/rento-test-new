@@ -1,3 +1,4 @@
+// api.ts
 import { Hono } from "https://deno.land/x/hono@v4.3.11/mod.ts";
 import { flows } from "./flows.ts";
 
@@ -20,26 +21,25 @@ app.get("/", async (c) => {
 
 app.post("/api/flows", async (c) => {
   try {
-    console.log("[API] Parsing request body");
-    const slugs = await c.req.json(); // Expecting direct array
-    console.log("[API] Requested slugs:", slugs);
+    const body = await c.req.json();
+    console.log("[API] Request body:", body);
+
+    // Handle both { slugs: ["kyc_flow"] } and ["kyc_flow"] formats
+    const slugs = body.slugs || body;
 
     if (!Array.isArray(slugs)) {
       return c.json(
         {
           success: false,
           error: "Invalid request body",
-          details: "Request body must be an array of flow slugs",
+          details: "Request must include an array of flow slugs",
         },
         400
       );
     }
 
     try {
-      console.log("[API] Validating flow slugs");
       const validatedSlugs = validateFlowSlugs(slugs);
-
-      console.log("[API] Fetching requested flows");
       const requestedFlows = validatedSlugs.reduce((acc, slug) => {
         acc[slug] = flows[slug];
         return acc;
@@ -50,7 +50,6 @@ app.post("/api/flows", async (c) => {
         flows: requestedFlows,
       });
     } catch (error) {
-      console.error("[API] Validation failed:", error.message);
       return c.json(
         {
           success: false,
@@ -61,7 +60,6 @@ app.post("/api/flows", async (c) => {
       );
     }
   } catch (error) {
-    console.error("[API] Request failed:", error);
     return c.json(
       {
         success: false,
