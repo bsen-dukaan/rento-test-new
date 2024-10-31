@@ -4,58 +4,43 @@ import { flows } from "./flows.ts";
 
 const app = new Hono();
 
-function validateFlowSlugs(slugs: string[]): string[] {
-  const validSlugs = Object.keys(flows);
-  const invalidSlugs = slugs.filter((slug) => !validSlugs.includes(slug));
-
-  if (invalidSlugs.length > 0) {
-    throw new Error(`Invalid flow slugs: ${invalidSlugs.join(", ")}`);
-  }
-
-  return slugs;
-}
-
 app.get("/", async (c) => {
   return c.json({ message: "server is live" });
 });
 
-app.post("/api/flows", async (c) => {
+app.get("/api/flows", async (c) => {
   try {
-    const body = await c.req.json();
-    console.log("[API] Request body:", body);
+    const slug = c.req.query("slugs");
+    console.log("[API] Requested slug:", slug);
 
-    if (!body.slugs || !Array.isArray(body.slugs)) {
+    if (!slug) {
       return c.json(
         {
           success: false,
-          error: "Invalid request body",
-          details: "Request must include 'slugs' array",
+          error: "Invalid request",
+          details: "No slug provided in query parameter",
         },
         400
       );
     }
 
-    try {
-      const validatedSlugs = validateFlowSlugs(body.slugs);
-      const requestedFlows = validatedSlugs.reduce((acc, slug) => {
-        acc[slug] = flows[slug];
-        return acc;
-      }, {});
-
-      return c.json({
-        success: true,
-        flows: requestedFlows,
-      });
-    } catch (error) {
+    if (!flows[slug]) {
       return c.json(
         {
           success: false,
-          error: "Validation failed",
-          details: error.message,
+          error: "Invalid slug",
+          details: `Flow '${slug}' not found`,
         },
         400
       );
     }
+
+    return c.json({
+      success: true,
+      flows: {
+        [slug]: flows[slug],
+      },
+    });
   } catch (error) {
     return c.json(
       {
